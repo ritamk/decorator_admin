@@ -34,9 +34,9 @@ OutlineInputBorder textFieldBorder() {
   );
 }
 
-Widget divider(double height, double width) {
+Widget divider(double height, double width, bool dark) {
   return Container(
-    color: Colors.black12,
+    color: dark ? Colors.black12 : Colors.white12,
     height: height,
     width: width,
   );

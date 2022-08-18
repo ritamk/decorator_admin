@@ -1,6 +1,4 @@
 import 'package:decorator_admin/controller/database.dart';
-import 'package:decorator_admin/controller/shared_pref.dart';
-import 'package:decorator_admin/model/employee_model.dart';
 import 'package:decorator_admin/model/order_model.dart';
 import 'package:decorator_admin/shared/constants.dart';
 import 'package:decorator_admin/shared/loading.dart';
@@ -14,14 +12,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomeList extends ConsumerStatefulWidget {
-  const HomeList({Key? key}) : super(key: key);
+  const HomeList({Key? key, required this.approved, required this.filtered})
+      : super(key: key);
+  final bool filtered;
+  final bool approved;
 
   @override
   ConsumerState<HomeList> createState() => _HomeListState();
 }
 
 class _HomeListState extends ConsumerState<HomeList> {
-  bool _loadingUserData = true;
   bool _loading = true;
   bool _error = false;
 
@@ -30,23 +30,13 @@ class _HomeListState extends ConsumerState<HomeList> {
   @override
   void initState() {
     super.initState();
-    if (UserSharedPreferences.getDetailedUseData() != null) {
-      setState(() => _loadingUserData = false);
-    } else {
-      loadUserData(
-        () {
-          if (!mounted) return;
-          commonSnackbar("Could not load user data", context);
-        },
-      ).whenComplete(() => setState(() => _loadingUserData = false));
-    }
     loadOrderData().whenComplete(() => setState(() => _loading = false));
   }
 
   Future<void> loadOrderData() async {
     try {
-      await DatabaseController(uid: UserSharedPreferences.getUid())
-          .getOrderData()
+      await DatabaseController()
+          .getOrderData(widget.filtered, widget.approved)
           .then((value) => value != null
               ? setState(() => _orderList = value)
               : setState(() => _error = true))
@@ -56,11 +46,15 @@ class _HomeListState extends ConsumerState<HomeList> {
           );
     } catch (e) {
       try {
-        await DatabaseController(uid: UserSharedPreferences.getUid())
-            .getOrderData()
+        await DatabaseController()
+            .getOrderData(widget.filtered, widget.approved)
             .then((value) => value != null
                 ? _orderList = value
-                : setState(() => _error = true));
+                : setState(() => _error = true))
+            .timeout(
+              const Duration(seconds: 20),
+              onTimeout: () => setState(() => _error = true),
+            );
       } catch (e) {
         setState(() => _error = true);
       }
@@ -87,38 +81,42 @@ class _HomeListState extends ConsumerState<HomeList> {
           child: !_error
               ? Padding(
                   padding: pagePadding,
-                  child: !_loading && !_loadingUserData
+                  child: !_loading
                       ? _orderList.isNotEmpty
                           ? ListView.builder(
                               primary: false,
                               shrinkWrap: true,
                               itemCount: _orderList.length,
                               itemBuilder: (BuildContext context, int index) {
-                                return InkWell(
-                                  onTap: () {
-                                    (_orderList[index].status! != STATUSES[1] ||
-                                            _orderList[index].status! !=
-                                                STATUSES[1])
-                                        ? Navigator.of(context).push(
-                                            CupertinoPageRoute(
-                                                builder: (context) =>
-                                                    EditOrderPage(
-                                                        order:
-                                                            _orderList[index])))
-                                        : commonSnackbar(
-                                            "Order cannot be edited now",
-                                            context);
-                                  },
-                                  child: OrderTile(
-                                    order: _orderList[index],
-                                    cltCall: () {
-                                      if (!mounted) return;
-                                      call(_orderList[index].cltPhone!);
+                                return Padding(
+                                  padding: const EdgeInsets.all(4.0),
+                                  child: InkWell(
+                                    onTap: () {
+                                      (_orderList[index].status! !=
+                                                  STATUSES[1] ||
+                                              _orderList[index].status! !=
+                                                  STATUSES[1])
+                                          ? Navigator.of(context).push(
+                                              CupertinoPageRoute(
+                                                  builder: (context) =>
+                                                      EditOrderPage(
+                                                          order: _orderList[
+                                                              index])))
+                                          : commonSnackbar(
+                                              "Order cannot be edited now",
+                                              context);
                                     },
-                                    empCall: () {
-                                      if (!mounted) return;
-                                      call(_orderList[index].empPhone!);
-                                    },
+                                    child: OrderTile(
+                                      order: _orderList[index],
+                                      cltCall: () {
+                                        if (!mounted) return;
+                                        call(_orderList[index].cltPhone!);
+                                      },
+                                      empCall: () {
+                                        if (!mounted) return;
+                                        call(_orderList[index].empPhone!);
+                                      },
+                                    ),
                                   ),
                                 );
                               },
@@ -155,28 +153,5 @@ class _HomeListState extends ConsumerState<HomeList> {
         ),
       ],
     );
-  }
-
-  Future<void> loadUserData(VoidCallback snackbar) async {
-    try {
-      final EmployeeModel? employeeModel =
-          await DatabaseController(uid: UserSharedPreferences.getUid())
-              .getEmployeeData();
-
-      if (employeeModel != null) {
-        UserSharedPreferences.setDetailedUserData(employeeModel);
-      }
-    } catch (e) {
-      try {
-        final EmployeeModel? employeeModel =
-            await DatabaseController(uid: UserSharedPreferences.getUid())
-                .getEmployeeData();
-        if (employeeModel != null) {
-          UserSharedPreferences.setDetailedUserData(employeeModel);
-        }
-      } catch (e) {
-        snackbar.call();
-      }
-    }
   }
 }

@@ -16,6 +16,7 @@ class OrderModel {
   final Timestamp? approveDate;
   final String? status;
   final String? amount;
+  final String? note;
 
   OrderModel({
     this.ref,
@@ -33,6 +34,7 @@ class OrderModel {
     this.cltAddress,
     this.item,
     this.status,
+    this.note,
   });
 }
 
@@ -53,6 +55,7 @@ class CompletedOrderModel {
   final Timestamp? completionDate;
   final String? status;
   final String? amount;
+  final String? note;
 
   CompletedOrderModel({
     this.ref,
@@ -71,5 +74,6 @@ class CompletedOrderModel {
     this.cltAddress,
     this.item,
     this.status,
+    this.note,
   });
 }

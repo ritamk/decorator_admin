@@ -1,9 +1,5 @@
-import 'package:decorator_admin/controller/auth.dart';
-import 'package:decorator_admin/controller/shared_pref.dart';
 import 'package:decorator_admin/shared/constants.dart';
 import 'package:decorator_admin/shared/loading.dart';
-import 'package:decorator_admin/shared/snackbar.dart';
-import 'package:decorator_admin/view/auth/auth_page.dart';
 import 'package:decorator_admin/view/home/home_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "484396597301",
+    "project_id": "decorator-7a2e1",
+    "storage_bucket": "decorator-7a2e1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:484396597301:android:e80897f5e76dde5412717c",
+        "android_client_info": {
+          "package_name": "kon.ritam.decorator"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "484396597301-28d23r5suo9gu22pcskog69dfv7ihq19.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCgXEDOmanTce5YXuL-qWUn3v6CaLDZbLI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "484396597301-28d23r5suo9gu22pcskog69dfv7ihq19.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "484396597301-422bglr50ad7b3k03r2sjb1vfnms5ts8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "kon.ritam.decoratorAdmin"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:484396597301:android:64e72c1230d5563112717c",
+        "android_client_info": {
+          "package_name": "kon.ritam.decorator_admin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "484396597301-28d23r5suo9gu22pcskog69dfv7ihq19.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCgXEDOmanTce5YXuL-qWUn3v6CaLDZbLI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "484396597301-28d23r5suo9gu22pcskog69dfv7ihq19.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "484396597301-422bglr50ad7b3k03r2sjb1vfnms5ts8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "kon.ritam.decoratorAdmin"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

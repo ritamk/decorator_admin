@@ -1,11 +1,10 @@
-import 'package:decorator_admin/controller/auth.dart';
+import 'package:decorator_admin/controller/database.dart';
 import 'package:decorator_admin/controller/shared_pref.dart';
-import 'package:decorator_admin/model/employee_model.dart';
 import 'package:decorator_admin/shared/constants.dart';
 import 'package:decorator_admin/shared/loading.dart';
+import 'package:decorator_admin/shared/snackbar.dart';
+import 'package:decorator_admin/shared/widget_des.dart';
 import 'package:decorator_admin/view/extras/completed.dart';
-import 'package:decorator_admin/view/extras/profile.dart';
-import 'package:decorator_admin/wrapper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -17,7 +16,32 @@ class HomeDrawer extends StatefulWidget {
 }
 
 class _HomeDrawerState extends State<HomeDrawer> {
-  bool _signingOut = false;
+  bool _loadingCount = true;
+  bool _errorCount = false;
+
+  Map<String, int> countMap = <String, int>{};
+  Map<String, int> rateMap = <String, int>{};
+  Map<String, int> remMap = <String, int>{};
+
+  @override
+  void initState() {
+    super.initState();
+    loadCount(() {
+      if (!mounted) return;
+      commonSnackbar("Couldn't load item count", context);
+    }).whenComplete(() => setState(() => _loadingCount = false));
+  }
+
+  Future<void> loadCount(VoidCallback snackbar) async {
+    try {
+      countMap = await DatabaseController().getItemCount();
+      remMap = await DatabaseController().getItemRem();
+      rateMap = await DatabaseController().getItemRate();
+    } catch (e) {
+      snackbar.call();
+      setState(() => _errorCount = true);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,37 +50,38 @@ class _HomeDrawerState extends State<HomeDrawer> {
       child: Column(
         children: <Widget>[
           DrawerHeader(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Text(
-                  UserSharedPreferences.getDetailedUseData()?.name ?? "",
-                  style: const TextStyle(
-                      color: buttonTextCol,
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10.0),
-                Text(
-                  UserSharedPreferences.getDetailedUseData()?.phone ?? "",
-                  style: const TextStyle(color: buttonTextCol),
-                ),
-                Text(
-                  UserSharedPreferences.getDetailedUseData()?.email ?? "",
-                  style: const TextStyle(color: buttonTextCol),
-                ),
-              ],
-            ),
+            child: !_errorCount
+                ? !_loadingCount
+                    ? Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          const Text("Item counts:\n",
+                              style: TextStyle(
+                                  color: Colors.white, fontSize: 15.0)),
+                          for (int i = 0; i < ITEMS.length; i++)
+                            Text(
+                              "${ITEMS[i]}(s): ${remMap[ITEMS[i]]}/${countMap[ITEMS[i]]}",
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                        ],
+                      )
+                    : const Loading(white: true)
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const <Widget>[
+                      Icon(Icons.error, color: Colors.red),
+                      SizedBox(width: 10.0),
+                      Text(
+                        "Something went wrong, couldn't load data\n"
+                        "Please try again later.",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ],
+                  ),
           ),
-          const Divider(),
-          ListTile(
-              textColor: buttonTextCol,
-              iconColor: buttonTextCol,
-              trailing: const Icon(Icons.person),
-              title: const Text("    Profile Page"),
-              onTap: () => Navigator.of(context).push(CupertinoPageRoute(
-                  builder: (context) => const ProfilePage()))),
+          divider(2.0, double.infinity, false),
           ListTile(
               textColor: buttonTextCol,
               iconColor: buttonTextCol,
@@ -64,37 +89,8 @@ class _HomeDrawerState extends State<HomeDrawer> {
               title: const Text("    Completed Orders Page"),
               onTap: () => Navigator.of(context).push(CupertinoPageRoute(
                   builder: (context) => const CompletedOrdersPage()))),
-          Expanded(
-              child: Align(
-            alignment: Alignment.bottomCenter,
-            child: ListTile(
-              textColor: buttonTextCol,
-              iconColor: buttonTextCol,
-              trailing: const Icon(Icons.logout),
-              title: !_signingOut
-                  ? const Text("    Sign out")
-                  : const Loading(white: true),
-              onTap: () => signOutLogic(() {
-                if (!mounted) return;
-                Navigator.of(context).pushAndRemoveUntil(
-                    CupertinoPageRoute(
-                      builder: (context) => const Wrapper(),
-                    ),
-                    (route) => false);
-              }),
-            ),
-          )),
         ],
       ),
     );
-  }
-
-  Future<void> signOutLogic(VoidCallback route) async {
-    setState(() => _signingOut = true);
-    await UserSharedPreferences.setLoggedIn(false);
-    await UserSharedPreferences.setUid("");
-    await UserSharedPreferences.setDetailedUserData(EmployeeModel(name: null));
-    await AuthenticationController().signOut();
-    route.call();
   }
 }

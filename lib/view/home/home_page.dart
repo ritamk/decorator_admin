@@ -1,12 +1,24 @@
 import 'package:decorator_admin/shared/constants.dart';
-import 'package:decorator_admin/view/home/add_order_page.dart';
 import 'package:decorator_admin/view/home/home_drawer.dart';
 import 'package:decorator_admin/view/home/home_list.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,18 +35,24 @@ class HomePage extends StatelessWidget {
                   ),
               icon: const Icon(Icons.info)),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const <Widget>[
+            Tab(
+              text: "Pending",
+            ),
+            Tab(
+              text: "Approved",
+            ),
+          ],
+        ),
       ),
-      body: const HomeList(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton(
-        tooltip: "Add Request",
-        backgroundColor: buttonCol,
-        foregroundColor: buttonTextCol,
-        onPressed: () {
-          Navigator.of(context).push(
-              CupertinoPageRoute(builder: (context) => const AddOrderPage()));
-        },
-        child: const Icon(Icons.add),
+      body: TabBarView(
+        controller: _tabController,
+        children: const <Widget>[
+          HomeList(filtered: true, approved: false),
+          HomeList(filtered: true, approved: true),
+        ],
       ),
     );
   }

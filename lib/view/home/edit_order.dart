@@ -38,12 +38,14 @@ class _EditOrderPageState extends State<EditOrderPage> {
   final TextEditingController _cltNameController = TextEditingController();
   final TextEditingController _cltPhoneController = TextEditingController();
   final TextEditingController _cltAddressController = TextEditingController();
+  final TextEditingController _noteController = TextEditingController();
 
   final FocusNode _nameFocus = FocusNode();
   final FocusNode _phoneFocus = FocusNode();
   final FocusNode _cltNameFocus = FocusNode();
   final FocusNode _cltPhoneFocus = FocusNode();
   final FocusNode _cltAddressFocus = FocusNode();
+  final FocusNode _noteFocus = FocusNode();
 
   Map<String, int> countMap = <String, int>{};
   Map<String, int> rateMap = <String, int>{};
@@ -84,32 +86,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Edit Order"),
-        actions: <Widget>[
-          !_deleting
-              ? IconButton(
-                  tooltip: "Delete order",
-                  onPressed: () => deleteOrder(
-                        () {
-                          if (!mounted) return;
-                          commonSnackbar("Order deletion successful", context);
-                        },
-                        () {
-                          if (!mounted) return;
-                          commonSnackbar(
-                              "Couldn't delete order, please try again later",
-                              context);
-                        },
-                        () {
-                          if (!mounted) return;
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                  icon: const Icon(Icons.delete))
-              : const Loading(white: true),
-        ],
-      ),
+      appBar: AppBar(title: const Text("Edit Order")),
       body: !_error
           ? !_loading
               ? GestureDetector(
@@ -390,7 +367,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
                             keyboardType: TextInputType.streetAddress,
                             textInputAction: TextInputAction.done,
                             onFieldSubmitted: (val) =>
-                                FocusScope.of(context).unfocus(),
+                                FocusScope.of(context).requestFocus(_nameFocus),
                             onChanged: (value) => _amountCalc
                                 ? setState(() => _amountCalc = false)
                                 : null,
@@ -433,8 +410,31 @@ class _EditOrderPageState extends State<EditOrderPage> {
                             keyboardType: TextInputType.phone,
                             maxLengthEnforcement: MaxLengthEnforcement.enforced,
                             textInputAction: TextInputAction.next,
-                            onFieldSubmitted: (val) => FocusScope.of(context)
-                                .requestFocus(_cltNameFocus),
+                            onFieldSubmitted: (val) =>
+                                FocusScope.of(context).requestFocus(_noteFocus),
+                            onChanged: (value) => _amountCalc
+                                ? setState(() => _amountCalc = false)
+                                : null,
+                          ),
+                          const SizedBox(height: 20.0),
+                          const Text(
+                            "Notes\n",
+                            textAlign: TextAlign.start,
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 10.0),
+                          // notes
+                          TextFormField(
+                            controller: _noteController,
+                            decoration: authTextInputDecoration(
+                                "Note", Icons.note, null),
+                            focusNode: _noteFocus,
+                            validator: (val) =>
+                                val!.isEmpty ? "Please enter a note" : null,
+                            maxLines: 2,
+                            textInputAction: TextInputAction.done,
+                            onFieldSubmitted: (val) =>
+                                FocusScope.of(context).unfocus(),
                             onChanged: (value) => _amountCalc
                                 ? setState(() => _amountCalc = false)
                                 : null,
@@ -581,59 +581,6 @@ class _EditOrderPageState extends State<EditOrderPage> {
     );
   }
 
-  Future<void> deleteOrder(VoidCallback succSnack, VoidCallback failSnack,
-      VoidCallback route) async {
-    bool sure = false;
-
-    await showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text("Delete this order?"),
-        content: Row(
-          children: const <Widget>[
-            Icon(Icons.error, color: Colors.red),
-            SizedBox(width: 10.0),
-            Flexible(
-              child: Text(
-                  "Are you sure you wish to delete this order?\n"
-                  "This action is permanent and irreversible",
-                  style: TextStyle(color: Colors.red)),
-            ),
-          ],
-        ),
-        actions: <CupertinoDialogAction>[
-          CupertinoDialogAction(
-            child: const Text("Yes"),
-            onPressed: () {
-              sure = true;
-              route.call();
-            },
-          ),
-          CupertinoDialogAction(
-            child: const Text("No"),
-            onPressed: () {
-              sure = false;
-              route.call();
-            },
-          ),
-        ],
-      ),
-    );
-
-    if (sure) {
-      try {
-        setState(() => _deleting = true);
-        await DatabaseController(uid: UserSharedPreferences.getUid())
-            .deleteOrderData(_order.ref!)
-            .whenComplete(() => succSnack.call());
-        route.call();
-      } catch (e) {
-        setState(() => _deleting = false);
-        failSnack.call();
-      }
-    }
-  }
-
   Future<DateTime?> datePicker(BuildContext context, bool start) {
     _amountCalc ? setState(() => _amountCalc = false) : null;
 
@@ -653,8 +600,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
       if (_amountCalc) {
         try {
           setState(() => _buttonLoading = true);
-          await DatabaseController(uid: UserSharedPreferences.getUid())
-              .editOrderData(OrderModel(
+          await DatabaseController(uid: _order.uid).editOrderData(OrderModel(
             ref: _order.ref,
             empName: _nameController.text,
             empPhone: _phoneController.text,
@@ -710,6 +656,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
     _cltPhoneController.dispose();
     _cltAddressFocus.dispose();
     _cltAddressController.dispose();
+
     for (int i = 0; i < _selectedItemController.length; i++) {
       _selectedItemController[i].dispose();
     }

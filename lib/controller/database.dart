@@ -20,33 +20,6 @@ class DatabaseController {
   final CollectionReference _adminCollection =
       FirebaseFirestore.instance.collection("Admin");
 
-  Future<void> setEmployeeData(EmployeeModel employee) async {
-    try {
-      await _employeeCollection.doc(uid).set({
-        "uid": employee.uid,
-        "name": employee.name,
-        "email": employee.email,
-        "phone": employee.phone,
-        "orders": [],
-      });
-    } catch (e) {
-      print("setEmployeeData: ${e.toString()}");
-      throw STH_WENT_WRONG;
-    }
-  }
-
-  Future<void> editEmployeeData(EmployeeModel employee) async {
-    try {
-      await _employeeCollection.doc(uid).update({
-        "name": employee.name,
-        "phone": employee.phone,
-      });
-    } catch (e) {
-      print("editEmployeeData: ${e.toString()}");
-      throw STH_WENT_WRONG;
-    }
-  }
-
   Future<EmployeeModel?> getEmployeeData() async {
     try {
       final DocumentSnapshot docSnap = await _employeeCollection.doc(uid).get();
@@ -58,39 +31,6 @@ class DatabaseController {
       );
     } catch (e) {
       print("getEmployeeData: ${e.toString()}");
-      throw STH_WENT_WRONG;
-    }
-  }
-
-  Future<void> setOrderData(OrderModel order) async {
-    try {
-      final DocumentReference docRef = await _orderCollection.add({
-        "ref": order.ref,
-        "uid": uid,
-        "empName": order.empName,
-        "empPhone": order.empPhone,
-        "cltName": order.cltName,
-        "cltPhone": order.cltPhone,
-        "cltAddress": order.cltAddress,
-        "amount": order.amount,
-        "item": order.item,
-        "orderDate": order.orderDate,
-        "editDate": order.editDate,
-        "startDate": order.startDate,
-        "endDate": order.endDate,
-        "approveDate": order.approveDate,
-        "status": order.status,
-      });
-
-      await _orderCollection.doc(docRef.id).update({
-        "ref": docRef.id,
-      });
-
-      await _employeeCollection.doc(uid).update({
-        "orders": FieldValue.arrayUnion([docRef.id]),
-      });
-    } catch (e) {
-      print("setOrderData: ${e.toString()}");
       throw STH_WENT_WRONG;
     }
   }
@@ -111,6 +51,7 @@ class DatabaseController {
         "endDate": order.endDate,
         "approveDate": order.approveDate,
         "status": order.status,
+        "note": order.note,
       });
     } catch (e) {
       print("editOrderData: ${e.toString()}");
@@ -118,10 +59,17 @@ class DatabaseController {
     }
   }
 
-  Future<List<OrderModel>?> getOrderData() async {
+  Future<List<OrderModel>?> getOrderData(bool filtered, bool approved) async {
     try {
-      final QuerySnapshot docSnap =
-          await _orderCollection.where("uid", isEqualTo: uid).get();
+      final QuerySnapshot docSnap = !filtered
+          ? await _orderCollection.get()
+          : approved
+              ? await _orderCollection
+                  .where("status", isEqualTo: "Approved")
+                  .get()
+              : await _orderCollection
+                  .where("status", isNotEqualTo: "Approved")
+                  .get();
       return docSnap.docs
           .map(
             (QueryDocumentSnapshot e) => OrderModel(
@@ -140,23 +88,12 @@ class DatabaseController {
               cltPhone: e["cltPhone"],
               item: e["item"],
               status: e["status"],
+              note: e["note"],
             ),
           )
           .toList();
     } catch (e) {
       print("getOrderData: ${e.toString()}");
-      throw STH_WENT_WRONG;
-    }
-  }
-
-  Future<void> deleteOrderData(String ref) async {
-    try {
-      await _orderCollection.doc(ref).delete();
-      await _employeeCollection.doc(uid).update({
-        "orders": FieldValue.arrayRemove([ref]),
-      });
-    } catch (e) {
-      print("deleteOrderData: ${e.toString()}");
       throw STH_WENT_WRONG;
     }
   }

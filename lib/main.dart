@@ -1,3 +1,4 @@
+import 'package:decorator_admin/controller/shared_pref.dart';
 import 'package:decorator_admin/wrapper.dart';
 import 'package:decorator_admin/shared/constants.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await UserSharedPreferences.init();
   await Firebase.initializeApp();
   runApp(const ProviderScope(child: MyApp()));
 }
@@ -15,7 +17,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Decorator App',
+      title: 'Decorator Admin',
       theme: mainTheme(),
       color: buttonCol,
       home: const Wrapper(),
